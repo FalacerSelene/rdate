@@ -1,4 +1,4 @@
-DEFAULT_GOAL := rdate
+.DEFAULT_GOAL := rdate
 
 rdate : rdate.o
 	gcc -o $@ $<
