@@ -1,4 +1,13 @@
-.DEFAULT_GOAL := rdate
+.DEFAULT_GOAL := all
+
+.PHONY : all
+all : man rdate
+
+.PHONY : man
+man : rdate.1
+
+rdate.1 : MANUAL.markdown
+	md2man-roff $< > $@
 
 rdate : rdate.o
 	gcc -o $@ $<
@@ -9,4 +18,4 @@ rdate.o : $(wildcard src/*.c)
 
 .PHONY : clean
 clean :
-	-@rm rdate.o rdate
+	-@rm rdate.o rdate rdate.1
