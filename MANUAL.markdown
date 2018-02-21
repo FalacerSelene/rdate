@@ -59,5 +59,5 @@ LICENCE
 -------
 
 This software is, as far as possible, placed into the public domain under the
-terms of the `UNLICENCE`. See the [licence file](LICENCE) for more
-information.
+terms of the `UNLICENCE`. See the licence file distributed with the source
+code or at the url listed in the `VERSION` section for more information.
