@@ -16,6 +16,8 @@ Add times, not just dates.
 #define FULLSTR_BUFLEN 255
 
 #define DIVIDES(x, y) (!((x) % (y)))
+#define FREE(x) do { if (x) { free(x); x = NULL; } } while (0)
+#define MOVE(x, y) do { x = y; y = NULL; } while (0)
 
 #ifdef __STDC_VERSION__
 #if __STDC_VERSION__ >= 199901L
@@ -49,10 +51,6 @@ static const char *const day_long[7] = {
 	"Thursday", "Friday", "Saturday"
 };
 
-static const char special_char[3] = {
-	'K', 'N', 'I'
-};
-
 static const char* const special_str[3] = {
 	"Kalends", "Nones", "Ides"
 };
@@ -61,6 +59,7 @@ static const char* const special_str[3] = {
 /* Globals                                                                  */
 /****************************************************************************/
 static bool do_dozenal = false;
+static char *progname = NULL;
 
 /****************************************************************************/
 /* Structs                                                                  */
@@ -69,6 +68,12 @@ enum SpecialDay {
 	Kalends,
 	Nones,
 	Ides
+};
+
+enum ArgCode {
+	Aok,
+	Quit,
+	Fail
 };
 
 struct RDate {
@@ -83,7 +88,24 @@ struct RDate {
 };
 
 /****************************************************************************/
-/* Inline Functions                                                         */
+/* Prototypes                                                               */
+/****************************************************************************/
+static INLINE int day_of_nones(int month_num);
+static INLINE int day_of_ides(int month_num);
+static INLINE bool is_leap_year(int year);
+static INLINE const char *const ending(int i);
+static INLINE int adj_year(int year);
+static char *numstrn(int innum, int at_least);
+static char *numstr(int i);
+static char *date_str_fmt(const char *const fmt_str, struct RDate *date);
+static int ipow(int x, int y);
+static int days_in_month(int month_num, int year);
+static struct RDate get_date();
+static enum ArgCode short_arg(char argl);
+static enum ArgCode short_args(char *argl);
+
+/****************************************************************************/
+/* Inline Functions {{{                                                     */
 /****************************************************************************/
 
 static INLINE int adj_year(int year)
@@ -93,14 +115,10 @@ static INLINE int adj_year(int year)
 
 static INLINE const char *const ending(int i)
 {
-	if (i / 10 == 1)
-		return "th";
-	if (i % 10 == 1)
-		return "st";
-	if (i % 10 == 2)
-		return "nd";
-	if (i % 10 == 3)
-		return "rd";
+	if (i / 10 == 1) return "th";
+	if (i % 10 == 1) return "st";
+	if (i % 10 == 2) return "nd";
+	if (i % 10 == 3) return "rd";
 	return "th";
 }
 
@@ -128,6 +146,10 @@ static INLINE int day_of_nones(int month_num)
 }
 
 /****************************************************************************/
+/* }}}                                                                      */
+/****************************************************************************/
+
+/****************************************************************************/
 /* Full functions                                                           */
 /****************************************************************************/
 
@@ -149,15 +171,25 @@ static int days_in_month(int month_num, int year)
 static int ipow(int x, int y)
 {
 	int r = 1;
-	while (y --> 0)
-		r *= x;
+	while (y) {
+		if (y & 1)
+			r *= x;
+		y >>= 1;
+		x *= x;
+	}
 	return r;
 }
 
+static char *numstr(int i)
+{
+	char *ret = numstrn(i, 0);
+	return ret;
+}
+
 /****************************************************************************/
-/* char *num_to_string(int innun, int at_least) {{{                         */
+/* char *numstrn(int innun, int at_least) {{{                               */
 /****************************************************************************/
-static char *num_to_string(int innum, int at_least)
+static char *numstrn(int innum, int at_least)
 {
 	char *ret = malloc(NUMSTR_BUFLEN);
 	char *adjbuf;
@@ -215,9 +247,8 @@ static char *num_to_string(int innum, int at_least)
 			adjbuf[thischar] = '0';
 		}
 		strcpy(adjbuf + at_least - outdex, ret);
-		free(ret);
-		ret = adjbuf;
-		adjbuf = NULL;
+		FREE(ret);
+		MOVE(ret, adjbuf);
 	}
 
 	return ret;
@@ -225,14 +256,6 @@ static char *num_to_string(int innum, int at_least)
 /****************************************************************************/
 /* }}}                                                                      */
 /****************************************************************************/
-
-static INLINE const char *const month_name(int month_num)
-{
-	if (month_num < 0 || month_num >= 12)
-		return "Unknown";
-
-	return month_long[month_num];
-}
 
 /****************************************************************************/
 /* struct RDate get_date() {{{                                              */
@@ -296,7 +319,7 @@ static char *date_str_fmt(const char *const fmt_str, struct RDate *date)
 {
 	char *ret = malloc(FULLSTR_BUFLEN);
 	char *retdex = ret;
-	char *numstr = NULL;
+	char *prtstr = NULL;
 	const char *fmtdex;
 	bool perc = false;
 
@@ -340,70 +363,70 @@ static char *date_str_fmt(const char *const fmt_str, struct RDate *date)
 				PRINT(month_long[date->month]);
 				break;
 			case 'd':
-				numstr = num_to_string(date->days_to, 2);
+				prtstr = numstrn(date->days_to, 2);
 				retdex += sprintf(
 					retdex,
 					"%s%c",
-					numstr,
-					special_char[date->day]);
+					prtstr,
+					*(special_str[date->day]));
 				break;
 			case 'D':
-				numstr = num_to_string(date->days_to, 2);
+				prtstr = numstrn(date->days_to, 2);
 				retdex += sprintf(
 					retdex,
 					"%s %s",
-					numstr,
+					prtstr,
 					special_str[date->day]);
 				break;
 			case 'e':
 				if (date->days_to) {
-					numstr = num_to_string(date->days_to, 0);
+					prtstr = numstr(date->days_to);
 					retdex += sprintf(
 						retdex,
 						"%s%c",
-						numstr,
-						special_char[date->day]);
+						prtstr,
+						*(special_str[date->day]));
 				} else
-					PRINTF("%c", special_char[date->day]);
+					PRINTF("%c", *(special_str[date->day]));
 				break;
 			case 'E':
 				if (date->days_to) {
-					numstr = num_to_string(date->days_to, 0);
+					prtstr = numstr(date->days_to);
 					retdex += sprintf(
 						retdex,
 						"%s %s",
-						numstr,
+						prtstr,
 						special_str[date->day]);
 				} else
-					PRINTF("%s", special_str[date->day]);
+					PRINT(special_str[date->day]);
 				break;
 			case 'm':
-				PRINTF("%.2d", date->month + 1);
+				prtstr = numstrn(date->month + 1, 2);
+				PRINT(prtstr);
 				break;
 			case 'u':
-				PRINTF("%d", date->dow ? date->dow : 7);
+				prtstr = numstr(date->dow ? date->dow : 7);
+				PRINT(prtstr);
 				break;
 			case 'w':
-				PRINTF("%d", date->dow);
+				prtstr = numstr(date->dow);
+				PRINT(prtstr);
 				break;
 			case 'y':
-				numstr = num_to_string(adj_year(date->effective_year), 2);
-				PRINT(numstr + strlen(numstr) - 2);
+				prtstr = numstrn(adj_year(date->effective_year), 2);
+				PRINT(prtstr + strlen(prtstr) - 2);
 				break;
 			case 'Y':
-				numstr = num_to_string(adj_year(date->effective_year), 4);
-				PRINT(numstr);
+				prtstr = numstrn(adj_year(date->effective_year), 4);
+				PRINT(prtstr);
 				break;
 			default:
 				fprintf(stderr, "Unknown format char %c\n", *fmtdex);
-				free(ret);
+				FREE(ret);
 				return NULL;
 		}
 
-		if (numstr) {
-			free(numstr);
-			numstr = NULL;
-		}
+		FREE(prtstr);
 #undef PRINT
 #undef PRINTF
 	}
@@ -415,6 +438,42 @@ static char *date_str_fmt(const char *const fmt_str, struct RDate *date)
 /* }}}                                                                      */
 /****************************************************************************/
 
+static enum ArgCode short_arg(char argl)
+{
+	switch(argl) {
+		case 'd':
+			do_dozenal = true;
+			return Aok;
+		case 'D':
+			do_dozenal = false;
+			return Aok;
+		case 'V':
+			/* Do version */
+			printf("%s (%s)\n", progname, VERSION);
+			return Quit;
+		case 'h':
+			/* Do help */
+			printf("usage: %s [options] [+format]\n", progname);
+			return Quit;
+		default:
+			/* Do usage */
+			fprintf(stderr, "Unknown arg %c!\n", argl);
+			fprintf(stderr, "usage: %s [options] [+format]\n", progname);
+			return Fail;
+	}
+}
+
+static enum ArgCode short_args(char *argl)
+{
+	enum ArgCode rc;
+	for (; *argl; argl++) {
+		rc = short_arg(*argl);
+		if (rc != Aok)
+			return rc;
+	}
+	return Aok;
+}
+
 int main(int argc, char **argv)
 {
 	struct RDate date;
@@ -422,7 +481,7 @@ int main(int argc, char **argv)
 	char *fmt_str = NULL;
 	int ii;
 	char ret = 0;
-	char *progname, *p;
+	char *p;
 
 	srandom(time(NULL));
 	progname = argv[0];
@@ -438,25 +497,10 @@ int main(int argc, char **argv)
 				fmt_str = argv[ii]+1;
 				break;
 			case '-':
-				switch (argv[ii][1]) {
-					case 'd':
-						do_dozenal = true;
-						break;
-					case 'D':
-						do_dozenal = false;
-						break;
-					case 'V':
-						/* Do version */
-						printf("%s (%s)\n", progname, VERSION);
-						goto CLEANUP;
-					case 'h':
-						/* Do help */
-						printf("usage: %s [options] [+format]\n", progname);
-						goto CLEANUP;
-					default:
-						/* Do usage */
-						fprintf(stderr, "usage: %s [options] [+format]\n", progname);
+				switch (short_args(argv[ii] + 1)) {
+					case Fail:
 						ret = 1;
+					case Quit:
 						goto CLEANUP;
 				}
 				break;
@@ -481,8 +525,7 @@ int main(int argc, char **argv)
 
 CLEANUP:
 
-	if (time_str)
-		free(time_str);
+	FREE(time_str);
 
 	return ret;
 }
