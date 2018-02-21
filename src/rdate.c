@@ -340,26 +340,20 @@ static char *date_str_fmt(const char *const fmt_str, struct RDate *date)
 				PRINT(month_long[date->month]);
 				break;
 			case 'd':
-				if (date->days_to) {
-					numstr = num_to_string(date->days_to, 2);
-					retdex += sprintf(
-						retdex,
-						"%s%c",
-						numstr,
-						special_char[date->day]);
-				} else
-					PRINTF("%c", special_char[date->day]);
+				numstr = num_to_string(date->days_to, 2);
+				retdex += sprintf(
+					retdex,
+					"%s%c",
+					numstr,
+					special_char[date->day]);
 				break;
 			case 'D':
-				if (date->days_to) {
-					numstr = num_to_string(date->days_to, 2);
-					retdex += sprintf(
-						retdex,
-						"%s %s",
-						numstr,
-						special_str[date->day]);
-				} else
-					PRINT(special_str[date->day]);
+				numstr = num_to_string(date->days_to, 2);
+				retdex += sprintf(
+					retdex,
+					"%s %s",
+					numstr,
+					special_str[date->day]);
 				break;
 			case 'e':
 				if (date->days_to) {
@@ -474,7 +468,7 @@ int main(int argc, char **argv)
 	}
 
 	if (!fmt_str)
-		fmt_str = "%A, %D %B, %Y";
+		fmt_str = "%A, %E %B, %Y";
 
 	/************************************************/
 	/* Prepare time                                 */
