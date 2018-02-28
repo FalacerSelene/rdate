@@ -8,6 +8,6 @@ version number is at the top of the [manual](MANUAL.markdown).
 
 ## unreleased
 
-## 0.1.0 - Wednesday, 08 Kalends March, 2770
+## 0.1.0 - Wednesday, 01 Kalends March, 2770
 ### Added
 - Initial release

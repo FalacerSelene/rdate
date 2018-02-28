@@ -47,8 +47,12 @@ FORMAT control the output. Interpreted sequences are:
 - %e    Short day of month e.g. 4N or I
 - %E    Full day of month e.g. 4 Nones or Ides
 - %h    Synonym for %b
+- %H    Hour number, ranging from 0 to 23
+- %I    Hour number, ranging from 1 to 12
 - %m    Month number, always with 2 digits e.g. 01 for January
+- %M    Minute number, always with 2 digits, ranging from 00 to 59
 - %n    A line break
+- %S    Second number, always with 2 digits, ranging from 00 to 60
 - %t    A tab character
 - %u    Day of week number, where Sunday is 7
 - %w    Day of week number, where Sunday is 0

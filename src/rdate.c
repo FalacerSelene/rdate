@@ -4,12 +4,6 @@
 #include <time.h>
 #include <string.h>
 
-#if 0
-TODO --
-
-Add times, not just dates.
-#endif
-
 #define VERSION "0.1.0"
 #define ROMAN_YEAR_OFFSET 753
 #define NUMSTR_BUFLEN 12
@@ -343,12 +337,6 @@ static char *date_str_fmt(const char *const fmt_str, struct RDate *date)
 			case '%':
 				*retdex++ = '%';
 				break;
-			case 'n':
-				*retdex++ = '\n';
-				break;
-			case 't':
-				*retdex++ = '\t';
-				break;
 			case 'a':
 				PRINT(day_short[date->dow]);
 				break;
@@ -400,9 +388,31 @@ static char *date_str_fmt(const char *const fmt_str, struct RDate *date)
 				} else
 					PRINT(special_str[date->day]);
 				break;
+			case 'H':
+				prtstr = numstr(date->hour);
+				PRINT(prtstr);
+				break;
+			case 'I':
+				prtstr = numstr(date->hour % 12 + 1);
+				PRINT(prtstr);
+				break;
 			case 'm':
 				prtstr = numstrn(date->month + 1, 2);
 				PRINT(prtstr);
+				break;
+			case 'M':
+				prtstr = numstrn(date->min, 2);
+				PRINT(prtstr);
+				break;
+			case 'n':
+				*retdex++ = '\n';
+				break;
+			case 'S':
+				prtstr = numstrn(date->sec, 2);
+				PRINT(prtstr);
+				break;
+			case 't':
+				*retdex++ = '\t';
 				break;
 			case 'u':
 				prtstr = numstr(date->dow ? date->dow : 7);
