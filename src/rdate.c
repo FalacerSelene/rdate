@@ -26,21 +26,12 @@
 /* String constants                                                         */
 /****************************************************************************/
 
-static const char *const month_short[12] = {
-	"Jan", "Feb", "Mar", "Apr", "May", "Jun",
-	"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
-};
-
-static const char *const month_long[12] = {
+static const char *const month[12] = {
 	"January", "February", "March", "April", "May", "June",
 	"July", "August", "September", "October", "November", "December"
 };
 
-static const char *const day_short[7] = {
-	"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"
-};
-
-static const char *const day_long[7] = {
+static const char *const day[7] = {
 	"Sunday", "Monday", "Tuesday", "Wednesday",
 	"Thursday", "Friday", "Saturday"
 };
@@ -338,17 +329,17 @@ static char *date_str_fmt(const char *const fmt_str, struct RDate *date)
 				*retdex++ = '%';
 				break;
 			case 'a':
-				PRINT(day_short[date->dow]);
+				PRINTF("%.3s", day[date->dow]);
 				break;
 			case 'A':
-				PRINT(day_long[date->dow]);
+				PRINT(day[date->dow]);
 				break;
 			case 'b':
 			case 'h':
-				PRINT(month_short[date->month]);
+				PRINTF("%.3s", month[date->month]);
 				break;
 			case 'B':
-				PRINT(month_long[date->month]);
+				PRINT(month[date->month]);
 				break;
 			case 'd':
 				prtstr = numstrn(date->days_to, 2);
